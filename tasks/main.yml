@@ -1,0 +1,7 @@
+---
+- name: Vagrant environment info
+  run_once: true
+  delegate_to: localhost
+  template:
+    src: vagrant_info.html.j2
+    dest: ./vagrant_info.html

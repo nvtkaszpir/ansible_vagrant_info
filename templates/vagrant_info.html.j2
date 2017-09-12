@@ -1,0 +1,82 @@
+<html>
+
+<style>
+table {
+  border: 1px solid black;
+  border-collapse: collapse;
+  margin:0.5em;
+  padding: 0.5em;
+  white-space: nowrap;
+}
+th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 0.5em;
+  white-space: nowrap;
+}
+
+th {
+  background-color: #eee;
+}
+
+#infobox {
+  margin:0.5em;
+  padding:0.5em;
+  white-space: pre;
+  background-color: #eee;
+  border: 1px solid black;
+  border-collapse: collapse;
+
+}
+</style>
+
+<!-- javascript -used to automatically select whole input text to make copy/paste life easier
+-->
+<script type='text/javascript' src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js'></script>
+<script type='text/javascript'>
+  $(function(){
+    $(document).on('click','input[type=text]',function(){ this.select(); });
+  });
+
+  $(function(){
+    $(document).on('click','span',function(){ $("#infobox").text($(this).attr('title')); });
+  });
+
+
+</script>
+
+<body>
+Vagrant Environment info, generated: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+<table>
+  <tr>
+  <th>Hostname</th>
+  <th>Details</th>
+  {% for iface in hostvars[inventory_hostname].ansible_interfaces | difference('lo') | sort() %}
+  <th>{{ iface }}</th>
+  {% endfor %}
+  </tr>
+<br/>
+{% for host in ansible_play_hosts|sort() %}
+  <tr>
+  <td>{{ hostvars[host].ansible_hostname }}</td>
+  <td>
+    <span id='hw' title='cpu: {{ hostvars[host].ansible_processor_vcpus }}
+  ram: {{ hostvars[host].ansible_memory_mb.real.total }}'>Hw</span>
+    <span id='disk' title='{{ hostvars[host].ansible_devices | to_nice_json }}'>Disk</span>
+    <span id='boot' title='{{ hostvars[host].ansible_cmdline["BOOT_IMAGE"] | to_nice_json }}'>Boot</span>
+    <span id='os' title='{{ hostvars[host].ansible_lsb | to_nice_json }}'>OS</span>
+    <span id='gw' title='{{ hostvars[host].ansible_default_ipv4.interface }} {{ hostvars[host].ansible_default_ipv4.gateway }}'>GW</span>
+    <span id='ns' title='{{ hostvars[host].ansible_dns.nameservers | to_nice_json }}'>DNS</span>
+    <span id='aenv' title='{{ hostvars[host].ansible_env | to_nice_json }}'>Env</span>
+    <span id='full' title='{{ hostvars[host] | to_nice_json }}'>Full</span>
+    </td>
+    {% for iface in hostvars[host].ansible_interfaces | difference('lo') | sort() %}
+    <td><input type='text' value='{{ hostvars[host]['ansible_'+iface].ipv4.address }}'></td>
+    {% endfor %}
+  </tr>
+{% endfor %}
+
+</table>
+<div id="infobox"></div>
+</body>
+</html>
