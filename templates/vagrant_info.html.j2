@@ -65,13 +65,15 @@ Vagrant Environment info, generated: {{ ansible_date_time.date }} {{ ansible_dat
     <span id='disk' title='{{ hostvars[host].ansible_devices | to_nice_json }}'>Disk</span>
     <span id='boot' title='{{ hostvars[host].ansible_cmdline["BOOT_IMAGE"] | to_nice_json }}'>Boot</span>
     <span id='os' title='{{ hostvars[host].ansible_lsb | to_nice_json }}'>OS</span>
-    <span id='gw' title='{{ hostvars[host].ansible_default_ipv4.interface }} {{ hostvars[host].ansible_default_ipv4.gateway }}'>GW</span>
+    <span id='gw' title='{{ hostvars[host].ansible_default_ipv4.interface | default('udef') }} {{ hostvars[host].ansible_default_ipv4.gateway | default('udef') }}'>GW</span>
     <span id='ns' title='{{ hostvars[host].ansible_dns.nameservers | to_nice_json }}'>DNS</span>
     <span id='aenv' title='{{ hostvars[host].ansible_env | to_nice_json }}'>Env</span>
     <span id='full' title='{{ hostvars[host] | to_nice_json }}'>Full</span>
     </td>
     {% for iface in hostvars[host].ansible_interfaces | difference('lo') | sort() %}
-    <td><input type='text' value='{{ hostvars[host]['ansible_'+iface].ipv4.address }}'></td>
+      {% if 'ipv4' in hostvars[host]['ansible_'+iface] %}
+    <td><input type='text' value='{{ hostvars[host]['ansible_'+iface].ipv4.address | default('udef') }}'></td>
+      {% endif %}
     {% endfor %}
   </tr>
 {% endfor %}

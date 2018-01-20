@@ -1,38 +1,57 @@
 # Vagrant info via Ansible
 
-Generates html file with vagrant environment
+Generates HTML file with vagrant environment by using vagrant provisioner ansible-remote.
+It will generate table with info about hosts managed by vagrant.
 
-# Requirements
+Example:
+
+![vagrant_info with example section expanded](vagrant_info.gif)
+
+Clicking on Details will show different contents.
+
+# Requirements and known limitations
+
 Your host used to run vagrant commands needs to have ansible installed.
+Using ansible as remote provisioner via ssh.
+This was tested under *nix systems, it might work under Windows + Ubuntu shell but it really depends on ansible itself.
+Maybe it should be changed to ansible-local provisioner....
 
 # Installation
-We assume that your pproject is in `~/src/proj` directory.
-Create `~/src/proj/ansible` directory.
-Create `~/src/proj/ansible/roles` directory, put there `vagrant_info` ansible role.
-Create ansible playbook in `~/src/proj/ansible/vagrant_info.yml`:
 
-```yaml
----
+We assume that your project is in `~/src/proj` directory.
 
-- hosts: all
-  gather_facts: yes
+* Create `~/src/proj/ansible` directory.
 
-  roles:
-    - roles/vagrant_info
-
+```bash
+mkdir -p ~/src/proj/ansible
 ```
 
-Modify Vagrantfile, add at the very end of the `Vagrant.configure` config section below code:
+* Create `~/src/proj/ansible/roles` directory, put there `vagrant_info` ansible role. You can do this by just cloning a repo:
+
+```bash
+git clone https://github.com/nvtkaszpir/ansible_vagrant_info.git ~/src/proj/ansible/vagrant_info
+```
+
+* Copy ansible playbook from `~/src/proj/ansible/vagrant_info` to `~/src/proj/ansible/vagrant_info.yml`:
+
+```bash
+cp ~/src/proj/ansible/vagrant_info ~/src/proj/ansible/vagrant_info.yml
+```
+
+
+* Modify `Vagrantfile`, add at the very end of the `Vagrant.configure` config section below code:
 
 ```ruby
 config.vm.provision "info", type: 'ansible' do |ansible|
-ansible.limit = "all"
-ansible.verbose = true
-ansible.playbook = "ansible/vagrant_info.yml"
+    ansible.limit    = "all"
+    ansible.verbose  = true
+    ansible.playbook = "ansible/vagrant_info.yml"
 end
 ```
 
-Add `~/src/proj/ansible.cfg` file:
+This adds additional provisioning step.
+
+* Add `~/src/proj/ansible.cfg` file:
 
 ```ini
 [defaults]
@@ -51,8 +70,35 @@ pipelining = True
 
 ```
 
-# Runing
+# Running
 
-When you run ``vagrant provision`` then it will connect to hosts and generate `~/src/proj/ansible/vagrant_info.html` file.
+To execute vagrant provisioners and generate `~/src/proj/ansible/vagrant_info.html`, run
 
-Run `vagrant provision --provision-with=info` to generate only report and not to trigger other provisioners.
+```bash
+vagrant provision
+```
+
+To generate only HTML report and not to trigger other provisioners, run:
+
+```bash
+vagrant provision --provision-with=info
+```
+
+You can also run it without invoking vagrant at all:
+
+```bash
+ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory ansible/vagrant_info.yml
+```
+
+# Customization
+
+See `templates/vagrant_info.html.j2` - this is simple Jinja2 template to generate HTML report. Adjust to your needs.
+You could for example add URLs to exposed HTTP services in vagrant.
+Watch out tor undefined ansible variables, though.
+
+# Other usage
+
+You could run this role and playbook on non-vagrant environment as well, so you could create simple status page for hosts.
+Yet, there are better tools for that like:
+* [Ansible Tower](https://www.ansible.com/products/tower) or alternatively [Ansible AWX](https://github.com/ansible/awx)
+* [Ansible CMDB](https://github.com/fboender/ansible-cmdb) for more advanced setups and details.
